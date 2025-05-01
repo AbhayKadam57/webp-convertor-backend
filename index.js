@@ -89,7 +89,9 @@ app.post("/upload", upload.array("images", 20), async (req, res) => {
 
       await image.webp({ quality }).toFile(outputPath);
 
-      urls.push(`http://localhost:${PORT}/images/${outputFilename}`);
+      urls.push(
+        `https://webp-convertor-backend.onrender.com/images/${outputFilename}`
+      );
     }
 
     res.status(200).json({ urls });
