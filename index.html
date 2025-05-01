@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Image to WebP Converter</title>
+  </head>
+  <body>
+    <h1>Convert Image to WebP</h1>
+    <form id="uploadForm">
+      <input
+        type="file"
+        id="imageInput"
+        name="image"
+        accept="image/*"
+        required
+      />
+      <button type="submit">Convert</button>
+    </form>
+
+    <h2>Converted WebP Image:</h2>
+    <img id="convertedImage" style="max-width: 400px" />
+
+    <script>
+      document
+        .getElementById("uploadForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const fileInput = document.getElementById("imageInput");
+          const formData = new FormData();
+          formData.append("image", fileInput.files[0]);
+
+          try {
+            const res = await fetch("http://localhost:3000/upload", {
+              method: "POST",
+              body: formData,
+            });
+
+            const { url } = await res.json();
+
+            // ✅ Ensure fresh image is always loaded
+            document.getElementById(
+              "convertedImage"
+            ).src = `${url}?t=${Date.now()}`;
+          } catch (err) {
+            console.error(err);
+          }
+        });
+    </script>
+  </body>
+</html>
