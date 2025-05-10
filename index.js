@@ -43,7 +43,7 @@ const upload = multer({
   storage,
   fileFilter,
   limits: {
-    files: 20, // only file count limit
+    files: 20,
   },
 });
 
@@ -53,6 +53,7 @@ app.post("/upload", upload.array("images", 20), async (req, res) => {
     const width = req.query.width ? parseInt(req.query.width) : null;
     const height = req.query.height ? parseInt(req.query.height) : null;
     const quality = req.query.quality ? parseInt(req.query.quality) : 80;
+    const maintainAspectRatio = req.query.maintainAspectRatio === "true";
 
     // Validate query params
     if (
@@ -85,7 +86,34 @@ app.post("/upload", upload.array("images", 20), async (req, res) => {
       const outputPath = path.join(outputDir, outputFilename);
 
       let image = sharp(inputPath);
-      if (width || height) image = image.resize(width || null, height || null);
+
+      const metadata = await image.metadata();
+      const originalWidth = metadata.width;
+      const originalHeight = metadata.height;
+
+      let targetWidth = width;
+      let targetHeight = height;
+
+      if (maintainAspectRatio) {
+        const aspectRatio = originalWidth / originalHeight;
+
+        if (width && height) {
+          // Adjust dimensions to fit within bounding box
+          if (width / height > aspectRatio) {
+            targetWidth = Math.round(height * aspectRatio);
+          } else {
+            targetHeight = Math.round(width / aspectRatio);
+          }
+        } else if (width) {
+          targetHeight = Math.round(width / aspectRatio);
+        } else if (height) {
+          targetWidth = Math.round(height * aspectRatio);
+        }
+      }
+
+      if (targetWidth || targetHeight) {
+        image = image.resize(targetWidth || null, targetHeight || null);
+      }
 
       await image.webp({ quality }).toFile(outputPath);
 
